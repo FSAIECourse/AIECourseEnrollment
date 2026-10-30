@@ -2,6 +2,6 @@
 # MONTHLY_CODE: 057bb1d3e7fd7218f7d5ca2fcab97b25396f98a9ad043c1f498ff15122b61d1a
 # MAX_REPOS: 120
 
-# NOTE: if updating template repos, add them to the bot installation for FS3DContentCreation:
-# https://github.com/organizations/FS3DContentCreation/settings/installations
+# NOTE: if updating template repos, add them to the bot installation for FSAIECourse:
+# https://github.com/organizations/FSAIECourse/settings/installations
 # NOTE: ensure each course repo is set as a template repository.

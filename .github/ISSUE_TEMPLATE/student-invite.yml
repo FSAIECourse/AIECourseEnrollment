@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        ### Welcome to the 3dcc Course!
+        ### Welcome to the AIE Course!
         Clicking submit below will instantly check our class capacity limits and generate your personal, private workspace under our organization.
   - type: input
     id: passcode

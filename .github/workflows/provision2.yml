@@ -4,6 +4,10 @@ on:
   issues:
     types: [labeled]
 
+concurrency:
+  group: aie-enrollment
+  cancel-in-progress: false
+
 permissions:
   contents: read
   issues: write
@@ -14,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ORG_NAME: FS3DContentCreation
+      ORG_NAME: FSAIECourse
 
     steps:
       - name: Checkout Enrollment Repository
@@ -74,7 +78,7 @@ jobs:
             exit 0
           fi
 
-          CURRENT_COUNT=$(gh repo list "$ORG_NAME" --limit 1000 --json name --jq '.[].name' | awk -v prefix="$PREFIX" 'index($0, prefix) == 1 { count++ } END { print count + 0 }')
+          CURRENT_COUNT=$(gh repo list "$ORG_NAME" --limit 1000 --json name --jq '.[].name' | awk -v prefix="aie-${PREFIX}-" 'index($0, prefix) == 1 { count++ } END { print count + 0 }')
           if [ "$CURRENT_COUNT" -ge "$MAX_REPOS" ]; then
             echo "ERROR: Maximum cohort repository limit reached."
             gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "@${STUDENT_GITHUB_LOGIN} Error: Course repository capacity reached. Please contact your instructor."
@@ -97,10 +101,10 @@ jobs:
           set -e
           SUMMARY=""
 
-          LABS="1 2 3 4 5 6 7"
+          LABS="Artificial_Intelligence_Ecosystem"
           for N in $LABS; do
-            TEMPLATE_REPO="3dcc-lab-${N}"
-            NEW_REPO_NAME="3dcc-lab-${N}-${PREFIX}-${STUDENT_GITHUB_LOGIN}"
+            TEMPLATE_REPO="$N"
+            NEW_REPO_NAME="aie-${PREFIX}-${STUDENT_GITHUB_LOGIN}"
 
             if gh repo view "$ORG/$NEW_REPO_NAME" > /dev/null 2>&1; then
               echo "::warning::Repository $ORG/$NEW_REPO_NAME already exists. Skipping."
@@ -136,44 +140,6 @@ jobs:
 
 
             SUMMARY="${SUMMARY}- https://github.com/${ORG}/${NEW_REPO_NAME}\n"
-          done
-
-          EXTRA_TEMPLATES="renderdoc API_SAMPLES"
-          for EXTRA in $EXTRA_TEMPLATES; do
-            EXTRA_NEW_NAME="${EXTRA}-${PREFIX}-${STUDENT_GITHUB_LOGIN}"
-
-            if gh repo view "$ORG/$EXTRA_NEW_NAME" > /dev/null 2>&1; then
-              echo "::warning::Repository $ORG/$EXTRA_NEW_NAME already exists. Skipping."
-              SUMMARY="${SUMMARY}- https://github.com/${ORG}/${EXTRA_NEW_NAME} (already existed)\n"
-              continue
-            fi
-
-            echo "Creating private repository $EXTRA_NEW_NAME from template $EXTRA..."
-            gh api \
-              --method POST \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/$ORG/$EXTRA/generate" \
-              -f owner="$ORG" \
-              -f name="$EXTRA_NEW_NAME" \
-              -F private=true
-
-            for i in $(seq 1 15); do
-              BRANCH_CHECK=$(gh api "/repos/$ORG/$EXTRA_NEW_NAME/branches" --jq '.[].name' 2>/dev/null || true)
-              if [ -n "$BRANCH_CHECK" ]; then
-                break
-              fi
-              echo "Template copy in progress... waiting 3 seconds (attempt $i/15)"
-              sleep 3
-            done
-            sleep 5
-
-            gh api \
-              --method PUT \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/$ORG/$EXTRA_NEW_NAME/collaborators/$STUDENT_GITHUB_LOGIN" \
-              -f permission=write
-
-            SUMMARY="${SUMMARY}- https://github.com/${ORG}/${EXTRA_NEW_NAME}\n"
           done
 
           {
